@@ -1,23 +1,28 @@
 version: '3'
 services: 
   nginx:
-    image: nginx:mainline-apline
+    image: nginx:mainline-alpine
     container_name: nginx
     restart: always
     ports: 
       - 80:80
       - 443:443
     volumes: 
-      - ./nginx/html:/etc/nginx/html/:rw
-      - ./nginx/.well-known:/usr/share/nginx/html/.well-known:rw
+      - ./nginx/html:/var/www/html:rw
+      - ./nginx/.well-known:/var/www/html/.well-known:rw
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/log:/var/log/nginx:rw
     links: 
       - php:php
+      - sql:sql
+    # networks:
+    #   sspanel-net:
+    #     ipv4_address: 172.20.200.100
 
   sql:
     image: mariadb:latest
     container_name: sql
+    restart: always
     expose: 
       - 3306
     volumes: 
@@ -29,26 +34,46 @@ services:
     # - MYSQL_DATABASE
     # - MYSQL_USER
     # - MYSQL_PASSWORD
+    # networks:
+    #   sspanel-net:
+    #     ipv4_address: 172.20.200.101
 
   php:
-    image: 7.2-fpm-alpine
+    # image: php:7.2-fpm-alpine
+    build: ./php
     container_name: fpm
     restart: always
     volumes: 
-    - ./nginx/html:/usr/share/nginx/html
+    - ./nginx/html:/var/www/html
+    - ./php/php.ini-production:/usr/local/etc/php/php.ini:ro
+    links: 
+      - sql:sql
+    # networks:
+    #   sspanel-net:
+    #     ipv4_address: 172.20.200.102
 
   phpmyadmin:
-    image:
+    image: phpmyadmin/phpmyadmin
     container_name: phpmyadmin
     ports: 
       - 9999:80
     env_file: 
       - ./.env
-    # environment: 
+    environment: 
+      - PMA_HOST=sql
     # - MYSQL_ROOT_PASSWORD
     # - MYSQL_DATABASE
     # - MYSQL_USER
     # - MYSQL_PASSWORD
-
+    links: 
+      - sql
   # ssl:
 
+# networks:
+#   sspanel-net:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.200.0/24
+
+          
