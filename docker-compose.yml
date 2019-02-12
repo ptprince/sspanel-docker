@@ -12,9 +12,11 @@ services:
       - ./nginx/.well-known:/var/www/html/.well-known:rw
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/log:/var/log/nginx:rw
+      - ./nginx/acme.sh:/etc/ssl/letsencrypt
     links: 
       - php:php
       - sql:sql
+      - acme-sh:acme-sh
     # networks:
     #   sspanel-net:
     #     ipv4_address: 172.20.200.100
@@ -67,7 +69,11 @@ services:
     # - MYSQL_PASSWORD
     links: 
       - sql
-  # ssl:
+  acme-sh:
+    image:
+    command: deamon
+    volumes:
+      - ./nginx/acme.sh:/acme.sh
 
 # networks:
 #   sspanel-net:
